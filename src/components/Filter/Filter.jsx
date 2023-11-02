@@ -1,17 +1,18 @@
 
 import { useDispatch, useSelector } from 'react-redux';
-import { setFilter, getFilter } from 'redux/filterSlice';
+import { setFilter } from 'redux/filterSlice';
+import { selectFilter } from 'redux/selectors';
 
 
 const Filter = () => { 
   
   const dispatch = useDispatch();
-  const filtered = useSelector(getFilter);
+  const filterTerm = useSelector(selectFilter);
   
-  const onChangeFilter = (event) => {
-    const { value } = event.currentTarget;
-    dispatch(setFilter(value))
-};
+  const handleFilterTerm = ({ target: { value } }) => {
+    dispatch(setFilter(value));
+  };
+  
 
   return(
   <div>
@@ -20,8 +21,8 @@ const Filter = () => {
       type="text"
       name="filter"
       id="filter"
-      value={filtered}
-      onChange={onChangeFilter}
+      value={filterTerm}
+      onChange={handleFilterTerm}
       placeholder="Search..."
     />
   </div>

@@ -1,40 +1,105 @@
-import { createSlice } from '@reduxjs/toolkit'
-import { persistReducer } from 'redux-persist'
-import storage from 'redux-persist/lib/storage' 
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { requestContacts, requestAddContact, requestDeleteContact } from 'helpers/api';
 
-const contactInitialState = {
-    contacts:[
-    { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-    { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-    { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-    { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-]
-}
-     ;
+export const fetchContacts = createAsyncThunk(
+  'contacts/getAll',
+  async (_, thunkAPI) => {
+    try {
+      const contacts = await requestContacts();
 
-const contactDetailsSlice = createSlice({
-    name: 'contactDetails',
-    initialState: contactInitialState,
-    reducers: {
-        addContact(state, action) {
-            state.contacts = [...state.contacts, action.payload]
-        },
-        deleteContact(state, action) {
-            state.contacts = state.contacts.filter(contact => contact.id !== action.payload)
-        },
+      return contacts; 
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
     }
+  }
+);
+
+export const addContact = createAsyncThunk(
+  'contacts/add',
+  async (newContact, thunkAPI) => {
+    try {
+      const contact = await requestAddContact(newContact);
+
+      return contact; 
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  }
+);
+
+export const deleteContact = createAsyncThunk(
+  'contacts/delete',
+  async (contactId, thunkAPI) => {
+    try {
+      const deletedContact = await requestDeleteContact(contactId);
+
+      return deletedContact; 
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  }
+);
+
+const INITIAL_STATE = {
+  contacts: null,
+  isLoading: false,
+  error: null,
+};
+
+const contactsSlice = createSlice({
+  
+  name: 'contacts',
+  
+  initialState: INITIAL_STATE,
+
+  extraReducers: builder =>
+    builder
+    // get contacts
+      .addCase(fetchContacts.pending, state => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchContacts.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.contacts = action.payload;
+      })
+      .addCase(fetchContacts.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+
+    // add contact
+      .addCase(addContact.pending, state => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(addContact.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.contacts.unshift(action.payload);
+        // state.products = [action.payload, ...state.products];
+        // state.products.push(action.payload);
+      })
+      .addCase(addContact.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+
+    // delete contact
+      .addCase(deleteContact.pending, state => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(deleteContact.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.contacts = state.contacts.filter(
+          contact => contact.id !== action.payload.id
+        );
+      })
+      .addCase(deleteContact.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      }),
 });
 
-export const getContact = state => state.contact.contacts;
 
-export const { addContact, deleteContact } = contactDetailsSlice.actions;
-
-const persistConfig = {
-  key: 'contacts',
-  storage,
-}
-
-export const contactsPersistReducer = persistReducer(
-    persistConfig,
-    contactDetailsSlice.reducer
-);
+export const contactsReducer = contactsSlice.reducer;

@@ -1,43 +1,67 @@
-
+import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { deleteContact, getContact } from 'redux/contactsSlice';
-import { getFilter } from 'redux/filterSlice';
+import {deleteContact, fetchContacts} from 'redux/contactsSlice';
+import { selectContact, selectFilter} from 'redux/selectors';
+
 
 const ContactList = () => {
-  const phonebooks = useSelector(getContact);
-  const filtered = useSelector(getFilter);
+  const contacts = useSelector(selectContact);
+  const filterTerm = useSelector(selectFilter);
+  // const isLoading = useSelector(selectIsLoading);
+  // const error = useSelector(selectError);
   const dispatch = useDispatch();
 
   
-   
+  useEffect(() => {
+    dispatch(fetchContacts());
+  }, [dispatch]);
 
 
-    const lowerCase = filtered.toLowerCase();
-    const filteredContacts = phonebooks.filter(phonebook =>
-        (phonebook.name.toLowerCase().includes(lowerCase)));
+    // const lowerCase = filtered.toLowerCase();
+    // const filteredContacts = phonebooks.filter(phonebook =>
+    //     (phonebook.name.toLowerCase().includes(lowerCase)));
   
-    const deletedContact = (contactId) => {
-        dispatch(deleteContact(contactId))
+    // const deletedContact = (contactId) => {
+    //     dispatch(deleteContact(contactId))
+    // };
+
+    const handleDeleteContact = contactId => {
+      dispatch(deleteContact(contactId));
     };
+  
+   
+  
+    const filteredContacts =
+      contacts !== null &&
+      contacts.filter(contact =>
+        contact.name.toLowerCase().includes(filterTerm.toLowerCase().trim())
+      );
     
 
     return (
-      <ul>
-        {filteredContacts.map(({name, number, id})=> (
-          <li key={id}>
+      
+      
+        <div>
+        {filteredContacts && filteredContacts.map(({name, number, id})=> {
+          return (
+            <div key={id}>
           <span>{name}: </span>
           <span>{number}</span>
           <button
             type="button"
             
-            onClick={() => deletedContact(id)}
+            onClick={() => handleDeleteContact(id)}
           >
             Delete
           </button>
-        </li>
-        ))}
-      </ul>
-    );
+        </div>
+          )
+        }   
+        )}
+      </div>
+ 
+      
+    )
   }
 
     
